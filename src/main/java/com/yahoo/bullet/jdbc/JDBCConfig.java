@@ -16,7 +16,7 @@ public class JDBCConfig extends StorageConfig {
     public static final String JDBC_DB_PASSWORD = "bullet.storage.jdbc.db.password";
     public static final String JDBC_DB_TABLE_NAME = "bullet.storage.jdbc.db.table.name";
     public static final String JDBC_BATCH_SIZE = "bullet.storage.jdbc.batch.size";
-    public static final String JDBC_HIKARI_CP_PREFIX = "bullet.storage.sql.hikari";
+    public static final String JDBC_HIKARI_CP_PREFIX = "bullet.storage.jdbc.hikari";
 
     // Defaults
     public static final String DEFAULT_CONFIGURATION_FILE = "bullet_jdbc_defaults.yaml";
