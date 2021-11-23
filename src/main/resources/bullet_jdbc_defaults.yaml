@@ -1,0 +1,4 @@
+# The table name for storage
+bullet.storage.jdbc.db.table.name: "queries"
+# At most how many SQL statements are executed together for batch operations
+bullet.storage.jdbc.batch.size: 10000
