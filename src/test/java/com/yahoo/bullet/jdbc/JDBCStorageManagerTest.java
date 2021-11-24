@@ -48,7 +48,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT ID, AUTHOR, FILENAME FROM DATABASECHANGELOG")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `ID`, `AUTHOR`, `FILENAME` FROM `DATABASECHANGELOG`")) {
             Assert.assertEquals(resultSet.getString(1), "schema");
             Assert.assertEquals(resultSet.getString(2), "bullet");
             Assert.assertEquals(resultSet.getString(3), "liquibase/database-changelog-schema.xml");
@@ -65,7 +65,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT partition_count FROM constants")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `partition_count` FROM `constants`")) {
             Assert.assertEquals(resultSet.getInt(1), 10);
         }
 
@@ -87,7 +87,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT query, partition FROM queries WHERE id = 'key'")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `value`, `partition` FROM `queries` WHERE `id` = 'key'")) {
             Assert.assertTrue(resultSet.next());
             Assert.assertEquals(SerializerDeserializer.fromBytes(resultSet.getBytes(1)), "foo");
             Assert.assertEquals(resultSet.getInt(2), 0);
@@ -98,7 +98,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT query, partition FROM queries WHERE id = 'key'")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `value`, `partition` FROM `queries` WHERE `id` = 'key'")) {
             Assert.assertFalse(resultSet.next());
         }
 
@@ -120,7 +120,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT id, query FROM queries")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `id`, `value` FROM `queries`")) {
             for (int i = 0; i < 10; i++) {
                 Assert.assertTrue(resultSet.next());
                 Assert.assertTrue(data.containsKey(resultSet.getString(1)));
@@ -135,7 +135,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT id, query FROM queries")) {
+             ResultSet resultSet = statement.executeQuery("SELECT `id`, `value` FROM `queries`")) {
             Assert.assertFalse(resultSet.next());
         }
 
@@ -209,11 +209,6 @@ public class JDBCStorageManagerTest {
     }
 
     @Test
-    public void testGetAll() throws Exception {
-        // hmm.. batch operations..?
-    }
-
-    @Test
     public void testNumberOfPartitions() {
         Assert.assertEquals(memoryManager.numberOfPartitions(), 10);
     }
@@ -238,7 +233,7 @@ public class JDBCStorageManagerTest {
             Set<String> keys = new HashSet<>();
             try (Connection conn = DriverManager.getConnection(connectionUrl);
                  Statement statement = conn.createStatement();
-                 ResultSet resultSet = statement.executeQuery("SELECT id FROM queries WHERE partition = " + i)) {
+                 ResultSet resultSet = statement.executeQuery("SELECT `id` FROM `queries` WHERE `partition` = " + i)) {
                 while (resultSet.next()) {
                     keys.add(resultSet.getString(1));
                 }
@@ -289,7 +284,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM queries")) {
+             ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM `queries`")) {
             Assert.assertTrue(resultSet.next());
             Assert.assertEquals(resultSet.getInt(1), 100);
         }
@@ -298,7 +293,7 @@ public class JDBCStorageManagerTest {
 
         try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement statement = conn.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM queries")) {
+             ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM `queries`")) {
             Assert.assertTrue(resultSet.next());
             Assert.assertEquals(resultSet.getInt(1), 0);
         }

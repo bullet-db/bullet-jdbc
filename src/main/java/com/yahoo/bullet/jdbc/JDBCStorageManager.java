@@ -75,7 +75,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
     @Override
     protected CompletableFuture<Boolean> putRaw(String namespace, String id, byte[] value) {
         log.debug("Setting {} to {} in putRaw", id, value);
-        final String sql = "INSERT INTO '" + namespace + "' (id, query, partition) VALUES (?, ?, ?)";
+        final String sql = "INSERT INTO `" + namespace + "` (`id`, `value`, `partition`) VALUES (?, ?, ?)";
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = getConnection();
                  PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -93,7 +93,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     @Override
     protected CompletableFuture<Boolean> putAllRaw(String namespace, Map<String, byte[]> data) {
-        final String sql = "INSERT INTO '" + namespace + "' (id, query, partition) VALUES (?, ?, ?)";
+        final String sql = "INSERT INTO `" + namespace + "` (`id`, `value`, `partition`) VALUES (?, ?, ?)";
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = getConnection();
                  PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -122,12 +122,15 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
     @Override
     protected CompletableFuture<byte[]> getRaw(String namespace, String id) {
         log.debug("Getting {} in getRaw", id);
-        final String sql = "SELECT query FROM '" + namespace + "' WHERE id = ?";
+        final String sql = "SELECT `value` FROM `" + namespace + "` WHERE `id` = ?";
         return CompletableFuture.supplyAsync(() -> {
             try (Connection conn = getConnection();
                  PreparedStatement statement = conn.prepareStatement(sql)) {
                 statement.setString(1, id);
                 try (ResultSet resultSet = statement.executeQuery()) {
+                    if (!resultSet.next()) {
+                        return null;
+                    }
                     return resultSet.getBytes(1);
                 }
             } catch (SQLException e) {
@@ -140,7 +143,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     @Override
     protected CompletableFuture<Map<String, byte[]>> getAllRaw(String namespace) {
-        final String sql = "SELECT id, query FROM '" + namespace + "'";
+        final String sql = "SELECT `id`, `value` FROM `" + namespace + "`";
         return CompletableFuture.supplyAsync(() -> {
             Map<String, byte[]> result = new HashMap<>();
             try (Connection conn = getConnection();
@@ -160,7 +163,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     @Override
     protected CompletableFuture<Map<String, byte[]>> getAllRaw(String namespace, Set<String> ids) {
-        final String sql = "SELECT query FROM '" + namespace + "' WHERE id = ?";
+        final String sql = "SELECT `value` FROM `" + namespace + "` WHERE `id` = ?";
         return CompletableFuture.supplyAsync(() -> {
             Map<String, byte[]> result = new HashMap<>();
             try (Connection conn = getConnection();
@@ -168,7 +171,9 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
                 for (String id : ids) {
                     statement.setString(1, id);
                     ResultSet resultSet = statement.executeQuery();
-                    result.put(id, resultSet.getBytes(1));
+                    if (resultSet.next()) {
+                        result.put(id, resultSet.getBytes(1));
+                    }
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -187,7 +192,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     private CompletableFuture<byte[]> removeAfterRead(String namespace, String id, byte[] data) {
         log.debug("Removing {} from storage after retrieval {}", id, data);
-        final String sql = "DELETE FROM '" + namespace + "' WHERE id = ?";
+        final String sql = "DELETE FROM `" + namespace + "` WHERE `id` = ?";
         return CompletableFuture.supplyAsync(() -> {
             try (Connection conn = getConnection();
                  PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -209,7 +214,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     @Override
     public CompletableFuture<Boolean> clear(String namespace) {
-        final String sql = "DELETE FROM '" + namespace + "'";
+        final String sql = "DELETE FROM `" + namespace + "`";
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = getConnection();
                  Statement statement = conn.createStatement()) {
@@ -224,7 +229,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
 
     @Override
     public CompletableFuture<Boolean> clear(String namespace, Set<String> ids) {
-        final String sql = "DELETE FROM '" + namespace + "' WHERE id = ?";
+        final String sql = "DELETE FROM `" + namespace + "` WHERE `id` = ?";
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = getConnection();
                  PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -263,7 +268,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
         if (partition < 0 || numberOfPartitions() <= partition) {
             throw new RuntimeException("Partition " + partition + " is out of bounds. Number of partitions: " + numberOfPartitions());
         }
-        final String sql = "SELECT id, query FROM '" + namespace + "' WHERE partition = ?";
+        final String sql = "SELECT `id`, `value` FROM `" + namespace + "` WHERE `partition` = ?";
         return CompletableFuture.supplyAsync(() -> {
             Map<String, byte[]> result = new HashMap<>();
             try (Connection conn = getConnection();
@@ -307,10 +312,13 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
     }
 
     private Integer getPartitionCount() {
-        final String sql = "SELECT partition_count FROM constants;";
+        final String sql = "SELECT `partition_count` FROM `constants`;";
         try (Connection conn = getConnection();
              Statement statement = conn.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
+            if (!resultSet.next()) {
+                return null;
+            }
             return (Integer) resultSet.getObject(1);
         } catch (SQLException e) {
             log.error("Couldn't get partition count.", e);
@@ -319,7 +327,7 @@ public class JDBCStorageManager<V extends Serializable> extends StorageManager<V
     }
 
     private void storePartitionCount() {
-        final String sql = "UPDATE constants SET partition_count = ?";
+        final String sql = "UPDATE `constants` SET `partition_count` = ?";
         try (Connection conn = getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setInt(1, partitionCount);
